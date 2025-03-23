@@ -20,6 +20,8 @@ import org.ulrich.test.springboot.app.services.CuentaService;
 import org.ulrich.test.springboot.app.services.CuentaServiceImpl;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 
 @SpringBootTest
 class SpringbootTestApplicationTests {
@@ -111,5 +113,37 @@ class SpringbootTestApplicationTests {
 		assertEquals("Andres", cuenta2.getPersona());
 
 		verify(cuentaRepository, times(2)).findById(1L);
+	}
+	@Test
+	void testFindAll(){
+		//Given
+		List<Cuenta> datos = Arrays.asList(crearCuenta001().orElseThrow(), crearCuenta0002().orElseThrow());
+		when(cuentaRepository.findAll()).thenReturn(datos);
+
+		//when
+		List<Cuenta> cuentas = service.findAll();
+
+		//then
+		assertFalse(cuentas.isEmpty());
+		assertEquals(2, cuentas.size());
+		assertTrue(cuentas.contains(crearCuenta0002().orElseThrow()));
+		verify(cuentaRepository).findAll();
+	}
+
+	@Test
+	void testSave() {
+		Cuenta cuentaPepe = new Cuenta(null, "Pepe", new BigDecimal("3000"));
+		when(cuentaRepository.save(any())).then(invocationOnMock -> {
+			Cuenta c = invocationOnMock.getArgument(0);
+			c.setId(3L);
+			return c;
+		});
+		// when
+		Cuenta cuenta = service.save(cuentaPepe);
+		// then
+		assertEquals("Pepe", cuenta.getPersona());
+		assertEquals(3, cuenta.getId());
+		assertEquals("3000", cuenta.getSaldo().toString());
+		verify(cuentaRepository).save(any());
 	}
 }
